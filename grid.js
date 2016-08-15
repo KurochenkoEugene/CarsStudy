@@ -1,3 +1,63 @@
+function colorPrice(price){
+    if(price > 2000){
+        return "<span style='color: red'>" + price + ' $' + "</span>"; 
+    } else {
+        return "<span style='color: green'>" + price + ' $' + "</span>";
+    }
+}
+
+/**
+*Display detail panel of record from grid
+*/
+function showForm(grid, rowIndex, colIndex, rec){
+    var editTab = new Ext.form.FormPanel({
+            title: "Edit car: " + rec.data.Car,
+            width: 300,
+            frame: true,
+            items: [
+                     new Ext.form.TextField({
+                            id: "car_field",
+                            fieldLabel: "Car",
+                            value: rec.get("Car"),
+                            readOnly: false
+                    }),
+                    new Ext.form.TextField({
+                            id: "model_field",
+                            fieldLabel: "Model",
+                            value: rec.get("Model"),
+                            readOnly: false
+                    }),
+                    new Ext.form.TextField({
+                            id: "price_field",
+                            fieldLabel: "Price",
+                            value: rec.get("Price"),
+                            readOnly: false
+                    })
+            ],
+            buttons: [
+                {
+                    text: "Save record",
+                    listeners: { 
+                        "click" : function(){
+                            addOrEditRecord(grid, rowIndex);
+                            Ext.getCmp('edit_Win').close();
+                        }
+                    }
+                } 
+            ]  
+        });
+                            
+        var editWin = new Ext.Window({
+                id: "edit_Win",
+                layout: 'auto',
+                modal: true,
+                closeAction: 'destroy',
+                items: {items: editTab}
+        });
+
+        editWin.show();
+}
+
 function getStore(mas){
     var store = new Ext.data.ArrayStore({
         fields: [
@@ -63,53 +123,9 @@ Ext.onReady(function(){
                         tooltip: 'edit',
                         handler: function(grid,  rowIndex, colIndex){
                             var rec = store.getAt(rowIndex);
-                            var editTab = new Ext.form.FormPanel({
-                                title: "Edit car: " + rec.data.Car,
-                                width: 300,
-                                frame: true,
-                                items: [
-                                        new Ext.form.TextField({
-                                            id: "car_field",
-                                            fieldLabel: "Car",
-                                            value: rec.get("Car"),
-                                            readOnly: false
-                                        }),
-                                       new Ext.form.TextField({
-                                            id: "model_field",
-                                            fieldLabel: "Model",
-                                            value: rec.get("Model"),
-                                            readOnly: false
-                                        }),
-                                       new Ext.form.TextField({
-                                            id: "price_field",
-                                            fieldLabel: "Price",
-                                            value: rec.get("Price"),
-                                            readOnly: false
-                                        })
-                                ],
-                                buttons: [
-                                        {
-                                            text: "Save record",
-                                            listeners: { "click" : function(){
-                                                addOrEditRecord(grid, rowIndex);
-                                                Ext.getCmp('edit_Win').close();
-                                            }}
-                                        } 
-                                ]  
-                            });
-                            
-                            var editWin = new Ext.Window({
-                                id: "edit_Win",
-                                layout: 'auto',
-                                modal: true,
-                                closeAction: 'destroy',
-                                items: {items: editTab}
-                            });
-
-                            editWin.show();
+                            showForm(grid,  rowIndex, colIndex, rec);
                         }
                         
-
                     }, {
                         //button delete
                         icon: 'shared/icons/fam/cross.gif',
@@ -133,7 +149,7 @@ Ext.onReady(function(){
             },
             { header: "Car", width: 200, sortable:  true, dataIndex: "Car" },
             { header: "Model", width: 200, sortable:  true, dataIndex: "Model"},
-            { header: "Price", width: 200, sortable:  true, dataIndex: "Price"}
+            { header: "Price", width: 200, sortable:  true, dataIndex: "Price", align: 'center', renderer: colorPrice}
         ],
         tbar: [
                 {
@@ -141,7 +157,7 @@ Ext.onReady(function(){
                     icon: "shared/icons/fam/add.gif",
                     listeners: {
                         "click": function(){
-                            var createTab = new Ext.form.FormPanel({
+                           var createTab = new Ext.form.FormPanel({
                                 title: "New car",
                                 width: 300,
                                 frame: true,
@@ -186,6 +202,12 @@ Ext.onReady(function(){
                     }
                 }
         ],
+        listeners: {
+            rowdblclick: function(grid, rowIndex, colIndex, rec){ 
+                var rec = store.getAt(rowIndex);
+                showForm(grid, rowIndex, colIndex, rec);
+            }
+        },
         height: 900,
         layout: 'auto',
         stripeRows: true
