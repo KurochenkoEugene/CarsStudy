@@ -430,25 +430,23 @@ function addOrEditRecord(grid, rowIndex, masID, store){
     grid.getView().refresh();
 }
 
+var cars = [
+    ['Nissan', 'GTR', 17000],
+    ['KIA', 'RIO', 8000],
+    ['Toyota', 'Supra', 18000]
+]; 
+
+var clients = [
+    ["Nikolas", "Quege", "X3", "9.5.1987", cars[2]],
+    ["Domminik", "Toredo", "x4", "12.09.1979", cars[0]]
+];     
+
+var storeClients = getStore(clients, [{name: "FirstName"}, {name: "LastName"}, {name: "MiddleName"}, {name: "DOB", type: "date"}, {name: "Car"}]);
+var store = getStore(cars, [{name: 'Car'}, {name: 'Model'}, {name: 'Price', type: 'integer'}]);
 
 Ext.onReady(function(){
     Ext.QuickTips.init(); 
-    var cars = [
-        ['Nissan', 'GTR', 17000],
-        ['KIA', 'RIO', 8000],
-        ['Toyota', 'Supra', 18000]
-    ]; 
-
-    var clients = [
-        ["Nikolas", "Quege", "X3", "9.5.1987", cars[2]],
-        ["Domminik", "Toredo", "x4", "12.09.1979", cars[0]]
-    ];     
-
-    var storeClients = getStore(clients, [{name: "FirstName"}, {name: "LastName"}, {name: "MiddleName"}, {name: "DOB", type: "date"}, {name: "Car"}]);
-    var store = getStore(cars, [{name: 'Car'}, {name: 'Model'}, {name: 'Price', type: 'integer'}]);
-    
-    var gridCars = getCarInGrid();
-     
+    var gridCars = getCarInGrid(); 
     var tabs = new Ext.TabPanel({
         renderTo: Ext.getBody(),
         activeTab: 0,
