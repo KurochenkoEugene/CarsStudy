@@ -39,7 +39,7 @@ function showForm(grid, rowIndex, colIndex, rec){
                     text: "Save record",
                     listeners: { 
                         "click" : function(){
-                            addOrEditRecord(grid, rowIndex);
+                            addOrEditRecord(grid, rowIndex, ["car_field", "model_field", "price_field"], store);
                             Ext.getCmp('edit_Win').close();
                         }
                     }
@@ -58,56 +58,82 @@ function showForm(grid, rowIndex, colIndex, rec){
         editWin.show();
 }
 
-function getStore(mas){
+function getStore(mas, fieldOfStore){  
     var store = new Ext.data.ArrayStore({
-        fields: [
-        {name: 'Car'}, 
-        {name: 'Model'}, 
-        {name: 'Price', type: 'integer'}
-        ]
+        fields: fieldOfStore
     });
-
+    
     store.loadData(mas);
     return store;
 }
+
 
 /**
 * function save the new data of record (edit or create new record)
 * @params grid - grid where displaying data from store
 * @params rowIndex - if record is editing
 */
-function addOrEditRecord(grid, rowIndex){
-    var car = Ext.getCmp('car_field').getValue();
+function addOrEditRecord(grid, rowIndex, masID, store){
+    var masOfValues = [];
+    var keys = [];
+    var keys_2 = [];
+    var obj = {};
+    /*var car = Ext.getCmp('car_field').getValue();
     var model = Ext.getCmp('model_field').getValue();
-    var price = Ext.getCmp('price_field').getValue();
+    var price = Ext.getCmp('price_field').getValue();*/
+    for(var i=0; i<masID.length; i++){
+        masOfValues.push(Ext.getCmp(masID[i]).getValue())
+    };
+
     if(rowIndex != undefined){
-        record = store.getAt(rowIndex);
-
-        record.set("Car", car);
+        record = store.getAt(rowIndex);       
+        for(var key in record.data){
+           keys.push(key)
+        }
+        for(var i=0; i<masOfValues.length; i++){
+            record.set(keys[i], masOfValues[i]);
+        };
+        /*record.set("Car", car);
         record.set("Model", model);
-        record.set("Price", price);
+        record.set("Price", price);*/
         record.commit();
+    } else {
+        
+        for(var key in store.data.items[0].data ){
+            keys_2.push(key)
+        }
 
-    } else {        
-        store.add(new store.recordType({
-            Car: car,
+        for(var i = 0; i<keys_2.length; i++){
+            obj[keys_2[i]] = masOfValues[i]
+        };        
+            
+        store.add(new store.recordType(
+            obj
+            /*Car: car,
             Model: model,
-            Price: price
-        }));
+            Price: price*/
+        ));
     }
     grid.getView().refresh();
 }
 
 var cars = [
-        ['Nissan', 'GTR', 17000],
-        ['KIA', 'RIO', 8000],
-        ['Toyota', 'Supra', 18000]
-    ];  
+    ['Nissan', 'GTR', 17000],
+    ['KIA', 'RIO', 8000],
+    ['Toyota', 'Supra', 18000]
+]; 
 
+var clients = [
+    ["Nikolas", "Quege", "X3", "9.5.1987", cars[2]],
+    ["Domminik", "Toredo", "x4", "12.09.1979", cars[0]]
+];     
+
+var storeClients = getStore(clients, [{name: "FirstName"}, {name: "LastName"}, {name: "MiddleName"}, {name: "DOB", type: "date"}, {name: "Car"}]);
 
 Ext.onReady(function(){
     Ext.QuickTips.init();
-    store = getStore(cars);
+    store = getStore(cars, [{name: 'Car'}, {name: 'Model'}, {name: 'Price', type: 'integer'}]);
+    
     var grid = new Ext.grid.GridPanel({
         store: store,
         title: 'Cars',
@@ -182,7 +208,7 @@ Ext.onReady(function(){
                                         {
                                             text: "Save record",
                                             listeners: { "click" : function(){
-                                                addOrEditRecord(grid);
+                                                addOrEditRecord(grid, undefined, ["car_field", "model_field", "price_field"], store);
                                                 Ext.getCmp('create_tab_window').close();
                                             }}
                                         } 
@@ -214,7 +240,8 @@ Ext.onReady(function(){
 
     });
 
-    var tabPanel = new Ext.form.FormPanel({
+    //for displaing grid on panel
+    /*var tabPanel = new Ext.form.FormPanel({
         renderTo: document.body,
         activeTab: 0,
         width: 1000,
@@ -228,6 +255,218 @@ Ext.onReady(function(){
             scroll: false,
             style: {overflow: 'auto', overflowX: 'hidden'}
         }
+    });*/
+
+    //for displaing grids on tabs
+    var gridOfClients = new Ext.grid.GridPanel({
+        store: storeClients,
+
+        title: "Clients",
+        columns: [
+            {
+                header: "Action",
+                xtype: "actioncolumn",
+                items: [
+                    {
+                        //button delete
+                        icon: 'shared/icons/fam/cross.gif',
+                        tooltip: 'delete',
+                        handler: function(gridOfClients, rowIndex, colIndex){
+                            var rec = storeClients.getAt(rowIndex);
+                            Ext.MessageBox.confirm("Confirm", "Delete client?", deleteRecord);
+
+                            function deleteRecord(btn){
+                                if(btn = "yes"){
+                                    storeClients.remove(rec);
+                                    gridOfClients.getView().refresh()
+                                }
+                                
+                            }
+
+                        },
+                    }, {
+                        //button edit
+                        icon: 'shared/icons/fam/user_edit.png',
+                        tooltip: "Edit",
+                        handler: function(gridOfClients, rowIndex, colIndex){
+                            var rec = storeClients.getAt(rowIndex);
+                            var editTabClient = new Ext.form.FormPanel({
+                                id: "editClientTab",
+                                title: "Edit client: " + rec.data.FirstName + ' ' + rec.data.LastName,
+                                width: 500,
+                                frame: true,
+                                items: [
+                                    new Ext.form.TextField({
+                                        id: "f_FirstName",
+                                        value: rec.get("FirstName"),
+                                        fieldLabel: "Last Name",
+                                        readOnly: false,
+                                        width: 200
+
+                                    }),
+                                    new Ext.form.TextField({
+                                        id: "f_LastName",
+                                        fieldLabel: "Last Name",
+                                        value: rec.get("LastName"),
+                                        readonly: false,
+                                        width: 200
+                                    }),
+
+                                    new Ext.form.TextField({
+                                        id: "f_MiddleName",
+                                        value: rec.get("MiddleName"),
+                                        readonly: false,
+                                        fieldLabel: "Middle Name",
+                                        width: 200
+                                    }),
+                                    new Ext.form.DateField({
+                                        id: "f_DOB",
+                                        value: rec.get("DOB"),
+                                        fieldLabel: "Date of Birth",
+                                        readonly: false,
+                                        width: 200
+                                    }),
+
+                                    new Ext.form.ComboBox({
+                                        id: "cmb_Car",
+                                        typeAhead: true,
+                                        triggerAction: 'all',
+                                        lazyRender:true,
+                                        mode: 'local',
+                                        store: store,
+                                        valueField: 'Model',
+                                        displayField: ('Model'),
+                                        value: rec.get("Car"),
+                                        width: 200,
+                                        fieldLabel: "Car"
+                                    }),  
+                                ],
+                                buttons: [
+                                {
+                                    text: "Save client",
+                                    listeners: {
+                                        click: function(){
+                                            addOrEditRecord(grid, rowIndex, ["f_FirstName", "f_LastName", "f_MiddleName", "f_DOB", 'cmb_Car'], storeClients);
+                                            Ext.getCmp("formClientsDetail").close();
+                                        }
+                                    }
+                                }],
+                            });
+                            
+                            var clientDetail = new Ext.Window({
+                                id: "formClientsDetail",
+                                layout: 'auto',
+                                modal: true,
+                                closeAction: 'destroy',
+                                items: [ editTabClient]
+                            });
+
+                            clientDetail.show();
+                        }   
+
+                                            
+                    }
+                ]
+            },
+            {header: "Name", width: 100, sortable:  true, dataIndex: "FirstName"},
+            {header: "Last Name", width: 100, sortable: true, dataIndex: "LastName"},
+            {header: "Midle Name", width: 100, sortable: true, dataIndex: "MiddleName"},
+            {header: "Date Of Birth", width: 100, sortable: true, renderer: Ext.util.Format.dateRenderer('d-M-Y'), dataIndex: "DOB"},
+            {header: "Car", width: 200, sortable: true, dataIndex: "Car" }
+
+        ],
+        tbar: [ {
+            text: "Add new client",
+            icon: "shared/icons/fam/add.gif",
+            listeners: {
+                'click': function(){
+                    var createTabClient = new Ext.form.FormPanel({
+                        id: "createClientTab",
+                        title: "New client",
+                        width: 500,
+                        frame: true,
+                        items: [
+                            new Ext.form.TextField({
+                                id: "f_FirstName_create",
+                                fieldLabel: "Last Name",
+                                readOnly: false,
+                                width: 200
+
+                            }),
+                            new Ext.form.TextField({
+                                id: "f_LastName_create",
+                                fieldLabel: "Last Name",
+                                readonly: false,
+                                width: 200
+                            }),
+
+                            new Ext.form.TextField({
+                                id: "f_MiddleName_create",
+                                readonly: false,
+                                fieldLabel: "Middle Name",
+                                width: 200
+                            }),
+                            new Ext.form.DateField({
+                                id: "f_DOB_create",
+                                fieldLabel: "Date of Birth",
+                                readonly: false,
+                                width: 200
+                            }),
+
+                            new Ext.form.ComboBox({
+                                id: "cmb_Car_create",
+                                typeAhead: true,
+                                triggerAction: 'all',
+                                lazyRender:true,
+                                mode: 'local',
+                                store: store,
+                                valueField: 'Model',
+                                displayField: ('Model'),
+                                width: 200,
+                                fieldLabel: "Car"
+                            }),  
+                        ],
+                        buttons: [
+                            {
+                                text: "Save client",
+                                listeners: {
+                                    "click": function(){
+                                        addOrEditRecord(grid, undefined, ["f_FirstName_create", "f_LastName_create", "f_MiddleName_create", "f_DOB_create", 'cmb_Car_create'], storeClients);
+                                        Ext.getCmp('createClient').close();
+                                    }
+                                }
+
+                            }
+
+                        ]
+                    })
+
+                    var createTabWindow = new Ext.Window({
+                        id: "createClient",
+                        modal: true,
+                        layout: 'auto',
+                        closeAction: 'destroy',
+                        items: { items: createTabClient }
+                    });
+
+                    createTabWindow.show();  
+                }        
+            }
+        }],
+        height: 900,
+        layout: 'auto',
+        stripeRows: true
+
+    });
+
+
+    var tabs = new Ext.TabPanel({
+        renderTo: Ext.getBody(),
+        activeTab: 0,
+        items: [
+            grid,
+            gridOfClients
+        ]
     });
 
 
